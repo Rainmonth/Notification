@@ -32,6 +32,7 @@ import android.widget.Toast;
  * 4、自定义视图的通知不能再添加Action
  * 5、普通通知同样支持addAction
  * 6、todo remote input 的实现
+ * 7、show float notification 利用setFullScreenIntent(PendingIntent)显示悬浮通知
  * <p/>
  * 出现的问题：
  * todo setSmallIcon无效；
@@ -130,6 +131,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 notifyId = 107;
                 showCustomButtonNotify();
                 break;
+            case R.id.tv_btn_float_style:
+                notifyId = 112;
+                showFloatStyleNotify();
+                break;
             case R.id.tv_btn_custom_layout_with_progress_style_not_confirmed:
                 isCustom = false;
                 isStyleConfirmed = false;
@@ -187,6 +192,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         TextView tvBtnMessagingStyle = (TextView) findViewById(R.id.tv_btn_messaging_style);
         TextView tvBtnCustomLayoutStyle = (TextView) findViewById(R.id.tv_btn_custom_layout_style);
         TextView tvBtnCustomLayoutWithBtnStyle = (TextView) findViewById(R.id.tv_btn_custom_layout_with_btn_style);
+        TextView tvBtnFloatStyle = (TextView) findViewById(R.id.tv_btn_float_style);
         TextView tvBtnCustomLayoutWithProgressStyleNotConfirmed = (TextView) findViewById(R.id.tv_btn_custom_layout_with_progress_style_not_confirmed);
         TextView tvBtnCustomLayoutWithProgressStyleConfirmed = (TextView) findViewById(R.id.tv_btn_custom_layout_with_progress_style_confirmed);
         TextView tvBtnCustomLayoutWithCustomProgressStyle = (TextView) findViewById(R.id.tv_btn_custom_layout_with_custom_progress_style);
@@ -205,6 +211,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         tvBtnMessagingStyle.setOnClickListener(this);
         tvBtnCustomLayoutStyle.setOnClickListener(this);
         tvBtnCustomLayoutWithBtnStyle.setOnClickListener(this);
+        tvBtnFloatStyle.setOnClickListener(this);
         tvBtnCustomLayoutWithProgressStyleNotConfirmed.setOnClickListener(this);
         tvBtnCustomLayoutWithProgressStyleConfirmed.setOnClickListener(this);
         tvBtnCustomLayoutWithCustomProgressStyle.setOnClickListener(this);
@@ -419,6 +426,40 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         Notification notify = mBuilder.build();
         notify.flags = Notification.FLAG_ONGOING_EVENT;
         mNotificationManager.notify(notifyId, notify);
+    }
+
+    /**
+     * 显示悬浮通知
+     */
+    private void showFloatStyleNotify() {
+        Intent hangIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.baidu.com"));
+        PendingIntent hangPendingIntent = PendingIntent.getActivity(this, 0, hangIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        mBuilder = getInitNotificationBuilder();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mBuilder.setSmallIcon(R.mipmap.icon)
+                    .setContentTitle("Float Notification")
+                    .setContentText("Float 样式通知")
+                    .setContentIntent(getDefaultPendingIntent(0))
+                    .setTicker("Float notification 来了")
+                    .setPriority(Notification.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setDefaults(Notification.DEFAULT_ALL)
+                    .addAction(0, "百度", firstPendingIntent)
+                    .addAction(0, "SuperRandy", secondPendingIntent)
+                    .setFullScreenIntent(hangPendingIntent, true);// Api 21
+            mNotificationManager.notify(notifyId, mBuilder.build());
+        } else {
+            mBuilder.setSmallIcon(R.mipmap.icon)
+                    .setContentTitle("Float Notification")
+                    .setContentText("Float 样式通知")
+                    .setContentIntent(getDefaultPendingIntent(0))
+                    .setTicker("Float notification 来了")
+                    .setAutoCancel(true)
+                    .setDefaults(Notification.DEFAULT_ALL)
+                    .addAction(0, "百度", firstPendingIntent)
+                    .addAction(0, "SuperRandy", secondPendingIntent)
+                    .setFullScreenIntent(hangPendingIntent, true);// Api 21
+        }
     }
 
     /**

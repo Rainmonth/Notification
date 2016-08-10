@@ -56,6 +56,11 @@
             android:text="自定义带按钮布局通知id=107" />
 
 
+        <TextView
+            android:id="@+id/tv_btn_float_style"
+            style="@style/text_btn"
+            android:text="悬浮通知" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
