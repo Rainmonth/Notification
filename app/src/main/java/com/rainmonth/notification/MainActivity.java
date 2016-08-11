@@ -24,10 +24,10 @@ import android.widget.Toast;
  * 兼容性方面：一般采用Support V4 包中的NotificationCompat.Builder类
  * 注意以下版本:
  * Android 3.0 API 11 添加了Notification.Builder类
- * Android 4.0 API 16
+ * Android 4.0 API 16 添加了大视图支持
  * Android 5.0 API 21 支持浮动通知
  * 1、3.0之前版本不支持自定义视图内的按钮点击事件
- * 2、4.1之前版本不支持大视图（这里的大视图值得是BigTextStyle、BigPictureStyle、InboxStyle和MessagingStyle等）
+ * 2、4.1之前版本不支持大视图（这里的大视图指的是BigTextStyle、BigPictureStyle、InboxStyle和MessagingStyle等）
  * 3、addAction(int, String, PendingIntent)int的值为0时表示不显示action的图片
  * 4、自定义视图的通知不能再添加Action
  * 5、普通通知同样支持addAction
