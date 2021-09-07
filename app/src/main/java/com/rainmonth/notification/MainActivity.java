@@ -83,7 +83,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         initButtonReceiver();
         Intent firstIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.baidu.com"));
         firstPendingIntent = PendingIntent.getActivity(this, 1, firstIntent, 0);
-        Intent secondIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://rainmonth.com"));
+        Intent secondIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://csdn.net"));
         secondPendingIntent = PendingIntent.getActivity(this, 1, secondIntent, 0);
     }
 
