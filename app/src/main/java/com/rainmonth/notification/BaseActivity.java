@@ -16,6 +16,8 @@ public class BaseActivity extends AppCompatActivity {
     protected NotificationManager mNotificationManager;
     protected NotificationCompat.Builder mBuilder;
 
+    protected KdNotifyConfig.Builder mConfigBuilder;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +34,14 @@ public class BaseActivity extends AppCompatActivity {
                 .setAutoCancel(true)
                 .setContentIntent(getDefaultPendingIntent(0))
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+    }
+
+    protected KdNotifyConfig.Builder getNotifyConfigBuilder() {
+        return new KdNotifyConfig.Builder(this)
+                .smallIcon(R.mipmap.ic_launcher)
+                .autoCancel(true)
+                .pendingIntent(getDefaultPendingIntent(0))
+                .largeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
     }
 
     protected void clearNotify(int notifyId) {
