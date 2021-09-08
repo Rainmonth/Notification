@@ -1,9 +1,6 @@
 package com.rainmonth.notification;
 
-import android.annotation.TargetApi;
 import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -16,20 +13,22 @@ import android.widget.RemoteViews;
  * @date 2021/9/7 4:51 下午
  */
 public class KdNotificationManager {
+
+    public static final String TAG = "KdNotificationManager";
     public static final String NOTIFICATION_GROUP_PLAY = "com.hhdd.kada.notification_group_play";
 
     /**
      * 要保证channelId的唯一性
      */
-    private static final String CHANNEL_ID_BOOK_PLAY = "CHANNEL_ID_BOOK_PLAY";
-    private static final String CHANNEL_ID_STORY_PLAY = "CHANNEL_ID_STORY_PLAY";
+    public static final String CHANNEL_ID_BOOK_PLAY = "CHANNEL_ID_BOOK_PLAY";
+    public static final String CHANNEL_ID_STORY_PLAY = "CHANNEL_ID_STORY_PLAY";
 
     private static final int NOTIFY_TYPE_BOOK_PLAY = 0;
     private static final int NOTIFY_TYPE_STORY_PLAY = 1;
 
     private static volatile KdNotificationManager sInstance;
 
-    private NotificationManager mNotificationMgr;
+    private final NotificationManager mNotificationMgr;
 
 
     private KdNotificationManager(Context context) {
@@ -37,7 +36,7 @@ public class KdNotificationManager {
                 .getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
-    private KdNotificationManager getInstance(Context context) {
+    public static KdNotificationManager getInstance(Context context) {
         if (sInstance == null) {
             synchronized (KdNotificationManager.class) {
                 if (sInstance == null) {
@@ -48,7 +47,20 @@ public class KdNotificationManager {
         return sInstance;
     }
 
-    private Notification makeNotification(Context context, KdNotifyConfig config) {
+    /**
+     * 创建通知对象（带有一些额外配置的通知
+     * 因为Notification可配置的参数太多了，当配置一些不常用的配置时，直接将将其设置到 config 对象得到的 Builder中
+     *
+     * @param context context
+     * @param config  通知通用设置
+     * @param builder 实际上使用的Builder（Api>=26时使用的是{@link Notification.Builder}，Api<26时使用的时
+     *                {@link NotificationCompat.Builder}
+     * @return notification instance
+     */
+    public Notification makeNotificationWithExtras(Context context,
+                                                   KdNotifyConfig config,
+                                                   NotificationCompat.Builder builder) {
+
         int sdkInt = Build.VERSION.SDK_INT;
         Notification notification;
         if (sdkInt >= Build.VERSION_CODES.O) { // Api>=26
@@ -63,43 +75,73 @@ public class KdNotificationManager {
         return notification;
     }
 
+
+    /**
+     * 创建通知对象
+     *
+     * @param context context
+     * @param config  通知配置实例
+     * @return notification instance
+     */
+    public Notification makeNotification(Context context,
+                                         KdNotifyConfig config) {
+        int sdkInt = Build.VERSION.SDK_INT;
+        Notification notification;
+        if (sdkInt >= Build.VERSION_CODES.O) { // Api>=26
+            notification = makeNotificationAboveV26(context, config);
+        } else if (sdkInt >= Build.VERSION_CODES.LOLLIPOP_MR1) { // Api>=22
+            notification = makeNotificationAboveV16(context, config);
+        } else if (sdkInt >= Build.VERSION_CODES.JELLY_BEAN) { // Api>=16
+            notification = makeNotificationAboveV16(context, config);
+        } else {
+            notification = makeNotificationBelowV16(config);
+        }
+        return notification;
+    }
+
+    /**
+     * 创建通知（API>=26)
+     *
+     * @param context context instance
+     * @param config  通知配置实例
+     * @return Notification instance
+     */
     private Notification makeNotificationAboveV26(Context context, KdNotifyConfig config) {
-        return makeNotificationAboveV26(config.toNotificationBuilder(context), config.mGroupId,
-                config.mGroupName, config.mChannelId, config.mChannelName, config.mPriority);
-    }
-
-    @TargetApi(26)
-    private Notification makeNotificationAboveV26(Notification.Builder builder, String groupId,
-                                                  String groupName, String channelId,
-                                                  String channelName, int importance) {
-        // 创建组
-        NotificationChannelGroup channelGroup = new NotificationChannelGroup(groupId, groupName);
-        mNotificationMgr.createNotificationChannelGroup(channelGroup);
-
-        // 创建channel
-        NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
-        channel.setGroup(groupId); // 设置Group
-        channel.setSound(null, null);// 禁用通知声音
-        channel.enableLights(true); // 开启呼吸灯
-        channel.enableVibration(true);// 是否震动
-        mNotificationMgr.createNotificationChannel(channel);
-
-        builder.setChannelId(channelId);
-        Notification notification = builder.build();
+        NotificationCompat.Builder builder = config.toRealBuilder(context);
+        KdNotifyConfig.NotificationBuilderWrapper builderCompat
+                = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+        if (config.mStyle instanceof Notification.Style) {
+            builderCompat.builder.setStyle((Notification.Style) config.mStyle);
+        }
+        Notification notification = builderCompat.builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         return notification;
+
     }
 
+    /**
+     * 创建通知（26>API>=16)
+     *
+     * @param context context instance
+     * @param config  通知配置实例
+     * @return Notification instance
+     */
     private Notification makeNotificationAboveV16(Context context, KdNotifyConfig config) {
-        return makeNotificationAboveV16(config.toNotificationCompatBuilder(context));
-    }
-
-    private Notification makeNotificationAboveV16(NotificationCompat.Builder builder) {
+        NotificationCompat.Builder builder = config.toRealBuilder(context);
+        if (config.mStyle instanceof NotificationCompat.Style) {
+            builder.setStyle((NotificationCompat.Style) config.mStyle);
+        }
         Notification notification = builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         return notification;
     }
 
+    /**
+     * 创建通知（API<16)
+     *
+     * @param config 通知配置实例
+     * @return Notification instance
+     */
     private Notification makeNotificationBelowV16(KdNotifyConfig config) {
         return makeNotificationBelowV16(config.mPendingIntent, config.mRemoteViews,
                 config.mSmallIcon, config.mContentText, config.mPriority);

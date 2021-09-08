@@ -2,6 +2,7 @@ package com.rainmonth.notification;
 
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -99,8 +100,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.tv_btn_normal:
-                notifyId = 101;
-                showNormalNotify();
+                try {
+                    notifyId = 101;
+                    showNormalNotify();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 break;
             case R.id.tv_btn_big_picture_style:
                 notifyId = 102;
@@ -226,146 +232,217 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      * 显示普通通知
      */
     private void showNormalNotify() {
-        mBuilder = getInitNotificationBuilder();
-        mBuilder.setSmallIcon(android.R.drawable.ic_btn_speak_now)
+        mConfigBuilder = getNotifyConfigBuilder()
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .groupName("showFloatStyleNotify")
+                .setSmallIcon(android.R.drawable.ic_btn_speak_now)
                 .setContentTitle("普通样式通知")
                 .setContentText("普通样式通知内容（文本内容只能显示一行，且字数有限）")
                 .setContentIntent(getDefaultPendingIntent(0))
-                .addAction(0, "百度", firstPendingIntent)// todo 不显示图标传0即可
-                .addAction(0, "SuperRandy", secondPendingIntent)// todo 不显示图标传0即可
-                .setContentInfo(String.valueOf(++normalCount))
-                .setDefaults(Notification.DEFAULT_ALL);
-        mNotificationManager.notify(notifyId, mBuilder.build());
-//                mBuilder.notify(); // 直接调用会抛出java.lang.IllegalMonitorStateException 提示object not locked by thread before notify()
+                .setContentInfo(String.valueOf(++normalCount));
+        NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this);
+        if (isAboveO()) {
+            KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+            wrapper.builder.addAction(0, "百度", firstPendingIntent)// todo 不显示图标传0即可
+                    .addAction(0, "SuperRandy", secondPendingIntent)// todo 不显示图标传0即可
+                    .setDefaults(Notification.DEFAULT_ALL);
+        } else {
+            builder.addAction(0, "百度", firstPendingIntent)// todo 不显示图标传0即可
+                    .addAction(0, "SuperRandy", secondPendingIntent)// todo 不显示图标传0即可
+                    .setDefaults(Notification.DEFAULT_ALL);
+        }
+
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotificationWithExtras(this, mConfigBuilder.build(), builder));
+//                mConfigBuilder.notify(); // 直接调用会抛出java.lang.IllegalMonitorStateException 提示object not locked by thread before notify()
     }
 
     /**
      * 显示BigPicture Notification
      */
     private void showBigPicStyleNotify() {
-        mBuilder = getInitNotificationBuilder();
-        mBuilder.setSmallIcon(android.R.drawable.ic_btn_speak_now)
+        mConfigBuilder = getNotifyConfigBuilder()
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .groupName("showFloatStyleNotify")
+                .setSmallIcon(android.R.drawable.ic_btn_speak_now)
                 .setContentTitle("BigPictureStyle样式通知")
                 .setContentText("大图片样式通知内容")
                 .setContentInfo(String.valueOf(++bigPicStyleCount))
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setTicker("BigPictureStyle通知")
-                .setStyle(new NotificationCompat.BigPictureStyle() // 设置通知样式为大型图片样式
-                        .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.bg1)));
-        mNotificationManager.notify(notifyId, mBuilder.build());
+//                .setDefaults(Notification.DEFAULT_ALL)
+                .setTicker("BigPictureStyle通知");
+        NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this);
+        if (isAboveO()) {
+            KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+            wrapper.builder.setStyle(new Notification.BigPictureStyle() // 设置通知样式为大型图片样式
+                    .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.bg1)));
+        } else {
+            builder.setStyle(new NotificationCompat.BigPictureStyle() // 设置通知样式为大型图片样式
+                    .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.bg1)));
+        }
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotificationWithExtras(this, mConfigBuilder.build(), builder));
     }
 
     /**
      * 显示BigTextStyle Notification
      */
     private void showBigTextStyleNotify() {
-        mBuilder = getInitNotificationBuilder();
-        mBuilder.setSmallIcon(R.mipmap.icon)
+        mConfigBuilder = getNotifyConfigBuilder()
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .groupName("showFloatStyleNotify")
+                .setSmallIcon(R.mipmap.icon)
                 .setContentTitle("BigTextStyle样式通知")
                 .setContentText("大文本样式通知内容")
                 .setContentInfo(String.valueOf(++bigTextStyleCount))
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setTicker("BigTextStyle通知")
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，仅此一天！" +
-                                "前2000楼获奖用户的红包已经在路上了哟！"));
-        mNotificationManager.notify(notifyId, mBuilder.build());
+                .setTicker("BigTextStyle通知");
+        NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this);
+        if (isAboveO()) {
+            KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+            wrapper.builder.setStyle(new Notification.BigTextStyle()
+                    .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，仅此一天！" +
+                            "前2000楼获奖用户的红包已经在路上了哟！")));
+        } else {
+            builder.setStyle(new NotificationCompat.BigTextStyle()
+                    .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，仅此一天！" +
+                            "前2000楼获奖用户的红包已经在路上了哟！"));
+        }
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotificationWithExtras(this, mConfigBuilder.build(), builder));
     }
 
     /**
      * 显示带action btn的BigTextStyle Notification
      */
     private void showBigTextStyleWithActionBtnNotify() {
-        mBuilder = getInitNotificationBuilder();
-
-        mBuilder.setSmallIcon(R.mipmap.icon)
+        mConfigBuilder = getNotifyConfigBuilder();
+        mConfigBuilder.setSmallIcon(R.mipmap.icon)
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .groupName("showFloatStyleNotify")
                 .setContentTitle("带action btn的BigTextStyle 通知")
                 .setContentText("带action btn的大文本样式通知内容")
                 .setContentIntent(getDefaultPendingIntent(0))
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setTicker("带action btn的BigTextStyle通知")
-                .addAction(0, "百度", firstPendingIntent)// todo 不显示图标传0即可
-                .addAction(0, "SuperRandy", secondPendingIntent)// todo 不显示图标传0即可
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，仅此一天！" +
-                                "前2000楼获奖用户的红包已经在路上了哟！"));
-        mNotificationManager.notify(notifyId, mBuilder.build());
+                .setTicker("带action btn的BigTextStyle通知");
+
+        NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this);
+
+        if (isAboveO()) {
+            KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+            wrapper.builder.addAction(0, "百度", firstPendingIntent)//  不显示图标传0即可
+                    .addAction(0, "SuperRandy", secondPendingIntent)//  不显示图标传0即可
+                    .setStyle(new Notification.BigTextStyle()
+                            .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，" +
+                                    "仅此一天！前2000楼获奖用户的红包已经在路上了哟！"));
+        } else {
+            builder.addAction(0, "百度", firstPendingIntent)//  不显示图标传0即可
+                    .addAction(0, "SuperRandy", secondPendingIntent)//  不显示图标传0即可
+                    .setStyle(new NotificationCompat.BigTextStyle()
+                            .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，" +
+                                    "仅此一天！前2000楼获奖用户的红包已经在路上了哟！"));
+        }
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotification(this, mConfigBuilder.build()));
+    }
+
+    public boolean sdkAboveO() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
     }
 
     /**
      * 显示InboxStyle Notification
      */
     private void showInboxStyleNotify() {
-        mBuilder = getInitNotificationBuilder();
-        mBuilder.setSmallIcon(R.mipmap.ic_launcher)
+        mConfigBuilder = getNotifyConfigBuilder();
+        mConfigBuilder.setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("InboxStyle样式通知")
                 .setContentText("Inbox样式通知内容")
                 .setContentIntent(getDefaultPendingIntent(0))
                 .setContentInfo(String.valueOf(++inboxStyleCount))
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setTicker("InboxStyle通知")
-                .addAction(0, "百度", firstPendingIntent)
-                .addAction(0, "SuperRandy", secondPendingIntent)
-                .setStyle(new NotificationCompat.InboxStyle()
-                        .addLine("InboxStyle item 1")
-                        .addLine("InboxStyle item 2")
-                        .addLine("InboxStyle item 3")
-                        .addLine("InboxStyle item 4")
-                        .setSummaryText("InboxStyle Summary Text"));
-        mNotificationManager.notify(notifyId, mBuilder.build());
+                .setTicker("InboxStyle通知");
+        NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this);
+        if (isAboveO()) {
+            KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+            wrapper.builder.addAction(0, "百度", firstPendingIntent)
+                    .addAction(0, "SuperRandy", secondPendingIntent)
+                    .setStyle(new Notification.InboxStyle()
+                            .addLine("InboxStyle item 1")
+                            .addLine("InboxStyle item 2")
+                            .addLine("InboxStyle item 3")
+                            .addLine("InboxStyle item 4")
+                            .setSummaryText("InboxStyle Summary Text"));
+        } else {
+            builder.addAction(0, "百度", firstPendingIntent)
+                    .addAction(0, "SuperRandy", secondPendingIntent)
+                    .setStyle(new NotificationCompat.InboxStyle()
+                            .addLine("InboxStyle item 1")
+                            .addLine("InboxStyle item 2")
+                            .addLine("InboxStyle item 3")
+                            .addLine("InboxStyle item 4")
+                            .setSummaryText("InboxStyle Summary Text"));
+        }
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotificationWithExtras(this, mConfigBuilder.build(), builder));
     }
 
     /**
      * 显示MessagingStyle Notification
      */
     private void showMessagingStyleNotify() {
-        mBuilder = getInitNotificationBuilder();
-        mBuilder.setSmallIcon(R.mipmap.ic_launcher)
+        mConfigBuilder = getNotifyConfigBuilder();
+        mConfigBuilder.setSmallIcon(R.mipmap.ic_launcher)
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
                 .setContentTitle("MessagingStyle样式通知")
                 .setContentText("MessagingStyle样式通知内容")
-                .setContentInfo(String.valueOf(++messagingStyleCount))
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setStyle(new NotificationCompat.MessagingStyle("Me")
-                        .setConversationTitle("Team lunch")
-                        .addMessage("Hi", SystemClock.elapsedRealtime(), null) // Pass in null for user.
-                        .addMessage("What's up?", SystemClock.elapsedRealtime(), "Coworker")
-                        .addMessage("Not much", SystemClock.elapsedRealtime(), null)
-                        .addMessage("How about lunch?", SystemClock.elapsedRealtime(), "Coworker"));
-        mNotificationManager.notify(notifyId, mBuilder.build());
+                .setContentInfo(String.valueOf(++messagingStyleCount));
+        NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
+            KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+            wrapper.builder.setStyle(new Notification.MessagingStyle("me")
+                    .setConversationTitle("Team lunch")
+                    .addMessage("Hi", SystemClock.elapsedRealtime(), "me") // Pass in null for user.
+                    .addMessage("What's up?", SystemClock.elapsedRealtime(), "Coworker")
+                    .addMessage("Not much", SystemClock.elapsedRealtime(), "me")
+                    .addMessage("How about lunch?", SystemClock.elapsedRealtime(), "Coworker"))
+                    .setDefaults(Notification.DEFAULT_ALL);
+        } else {
+            builder.setStyle(new NotificationCompat.MessagingStyle("me")
+                    .setConversationTitle("Team lunch")
+                    .addMessage("Hi", SystemClock.elapsedRealtime(), "me") // Pass in null for user.
+                    .addMessage("What's up?", SystemClock.elapsedRealtime(), "Coworker")
+                    .addMessage("Not much", SystemClock.elapsedRealtime(), "me")
+                    .addMessage("How about lunch?", SystemClock.elapsedRealtime(), "Coworker"))
+                    .setDefaults(Notification.DEFAULT_ALL);
+        }
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotificationWithExtras(this, mConfigBuilder.build(), builder));
     }
 
     /**
      * 显示自定义通知
      */
     private void showCustomNotify() {
-        mBuilder = getInitNotificationBuilder();
+        mConfigBuilder = getNotifyConfigBuilder();
         //先设定RemoteViews
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.view_custom);
         remoteViews.setImageViewResource(R.id.custom_icon, R.drawable.icon);
         remoteViews.setTextViewText(R.id.tv_custom_title, "今日头条");
         remoteViews.setTextViewText(R.id.tv_custom_content, "金州勇士官方宣布球队已经解雇了主帅马克-杰克逊，随后宣布了最后的结果。");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {// API 16
-            mBuilder.setContent(remoteViews)
-                    .setContentIntent(getDefaultPendingIntent(PendingIntent.FLAG_CANCEL_CURRENT))
-                    .setDefaults(Notification.DEFAULT_ALL)
-                    .setContentInfo(String.valueOf(++customLayoutCount))
-                    .setWhen(System.currentTimeMillis())// 通知产生的时间，会在通知信息里显示
-                    .setTicker("有新资讯")
-                    .setPriority(Notification.PRIORITY_DEFAULT)// 设置该通知优先级
-                    .setOngoing(false)//不是正在进行的   true为正在进行  效果和.flag一样
-                    .setSmallIcon(R.drawable.icon);
-        } else {
-            mBuilder.setContent(remoteViews)
-                    .setDefaults(Notification.DEFAULT_ALL)
-                    .setContentInfo(String.valueOf(++customLayoutCount))
-                    .setContentIntent(getDefaultPendingIntent(PendingIntent.FLAG_CANCEL_CURRENT))
-                    .setTicker("有新资讯")
-//                    .setPriority(Notification.COLOR_DEFAULT)
-                    .setOngoing(false)
-                    .setSmallIcon(R.drawable.icon);
-        }
-        Notification notify = mBuilder.build();
-        mBuilder.setCustomContentView(remoteViews);
+        mConfigBuilder.setContent(remoteViews)
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .setContentIntent(getDefaultPendingIntent(PendingIntent.FLAG_CANCEL_CURRENT))
+                .setContentInfo(String.valueOf(++customLayoutCount))
+                .setWhen(System.currentTimeMillis())// 通知产生的时间，会在通知信息里显示
+                .setTicker("有新资讯")
+                .setPriority(Notification.PRIORITY_DEFAULT)// 设置该通知优先级
+                .setOngoing(false)//不是正在进行的   true为正在进行  效果和.flag一样
+                .setSmallIcon(R.drawable.icon);
+        Notification notify = KdNotificationManager.getInstance(this)
+                .makeNotification(this, mConfigBuilder.build());
         mNotificationManager.notify(notifyId, notify);
     }
 
@@ -373,22 +450,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      * 显示自定义带按钮的通知栏
      */
     private void showCustomButtonNotify() {
-        mBuilder = getInitNotificationBuilder();
+        mConfigBuilder = getNotifyConfigBuilder();
         RemoteViews mRemoteViews = new RemoteViews(getPackageName(), R.layout.view_custom_button);
         mRemoteViews.setImageViewResource(R.id.custom_song_icon, R.drawable.sing_icon);
         //API 3.0 以上的时候显示按钮，否则消失
         mRemoteViews.setTextViewText(R.id.tv_custom_song_singer, "周杰伦");
         mRemoteViews.setTextViewText(R.id.tv_custom_song_name, "七里香");
         //如果版本号低于（3.0），那么不显示按钮
-        if (Build.VERSION.SDK_INT <= 9) {
-            mRemoteViews.setViewVisibility(R.id.ll_custom_button, View.GONE);
+        mRemoteViews.setViewVisibility(R.id.ll_custom_button, View.VISIBLE);
+        if (isPlay) {
+            mRemoteViews.setImageViewResource(R.id.btn_custom_play, R.drawable.btn_pause);
         } else {
-            mRemoteViews.setViewVisibility(R.id.ll_custom_button, View.VISIBLE);
-            if (isPlay) {
-                mRemoteViews.setImageViewResource(R.id.btn_custom_play, R.drawable.btn_pause);
-            } else {
-                mRemoteViews.setImageViewResource(R.id.btn_custom_play, R.drawable.btn_play);
-            }
+            mRemoteViews.setImageViewResource(R.id.btn_custom_play, R.drawable.btn_play);
         }
         //点击的事件处理
         Intent buttonIntent = new Intent(ACTION_BUTTON);
@@ -406,24 +479,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         PendingIntent intent_next = PendingIntent.getBroadcast(this, 3, buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         mRemoteViews.setOnClickPendingIntent(R.id.btn_custom_next, intent_next);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mBuilder.setContent(mRemoteViews)
-                    .setContentIntent(getDefaultPendingIntent(0))
-                    .setWhen(System.currentTimeMillis())// 通知产生的时间，会在通知信息里显示
-                    .setTicker("正在播放")
-                    .setPriority(Notification.PRIORITY_DEFAULT)// 设置该通知优先级
-                    .setOngoing(true)
-                    .setSmallIcon(R.drawable.sing_icon);
-        } else {
-            mBuilder.setContent(mRemoteViews)
-                    .setContentIntent(getDefaultPendingIntent(0))
-                    .setWhen(System.currentTimeMillis())// 通知产生的时间，会在通知信息里显示
-                    .setTicker("正在播放")
-//                    .setPriority(Notification.PRIORITY_DEFAULT)// 设置该通知优先级
-                    .setOngoing(true)
-                    .setSmallIcon(R.drawable.sing_icon);
-        }
-        Notification notify = mBuilder.build();
+        mConfigBuilder.setContent(mRemoteViews)
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .setContentIntent(getDefaultPendingIntent(0))
+                .setWhen(System.currentTimeMillis())// 通知产生的时间，会在通知信息里显示
+                .setTicker("正在播放")
+                .setPriority(Notification.PRIORITY_DEFAULT)// 设置该通知优先级
+                .setOngoing(true)
+                .setSmallIcon(R.drawable.sing_icon);
+        Notification notify = KdNotificationManager.getInstance(this)
+                .makeNotification(this, mConfigBuilder.build());
         notify.flags = Notification.FLAG_ONGOING_EVENT;
         mNotificationManager.notify(notifyId, notify);
     }
@@ -434,32 +500,34 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private void showFloatStyleNotify() {
         Intent hangIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.baidu.com"));
         PendingIntent hangPendingIntent = PendingIntent.getActivity(this, 0, hangIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        mBuilder = getInitNotificationBuilder();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mBuilder.setSmallIcon(R.mipmap.icon)
-                    .setContentTitle("Float Notification")
-                    .setContentText("Float 样式通知")
-                    .setContentIntent(getDefaultPendingIntent(0))
-                    .setTicker("Float notification 来了")
-                    .setPriority(Notification.PRIORITY_HIGH)
-                    .setAutoCancel(true)
-                    .setDefaults(Notification.DEFAULT_ALL)
-                    .addAction(0, "百度", firstPendingIntent)
+        mConfigBuilder = getNotifyConfigBuilder();
+        mConfigBuilder.setSmallIcon(R.mipmap.icon)
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .groupName("showFloatStyleNotify")
+                .setContentTitle("Float Notification")
+                .setContentText("Float 样式通知")
+                .setContentIntent(getDefaultPendingIntent(0))
+                .setTicker("Float notification 来了")
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setAutoCancel(true);
+        NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this);
+        if (isAboveO()) {
+            KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+            wrapper.builder.addAction(0, "百度", firstPendingIntent)
                     .addAction(0, "SuperRandy", secondPendingIntent)
-                    .setFullScreenIntent(hangPendingIntent, true);// Api 21
-            mNotificationManager.notify(notifyId, mBuilder.build());
+                    .setFullScreenIntent(hangPendingIntent, true);
         } else {
-            mBuilder.setSmallIcon(R.mipmap.icon)
-                    .setContentTitle("Float Notification")
-                    .setContentText("Float 样式通知")
-                    .setContentIntent(getDefaultPendingIntent(0))
-                    .setTicker("Float notification 来了")
-                    .setAutoCancel(true)
-                    .setDefaults(Notification.DEFAULT_ALL)
-                    .addAction(0, "百度", firstPendingIntent)
-                    .addAction(0, "SuperRandy", secondPendingIntent)
+            builder.addAction(0, "百度", firstPendingIntent).addAction(0, "SuperRandy", secondPendingIntent)
                     .setFullScreenIntent(hangPendingIntent, true);// Api 21
         }
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotificationWithExtras(this, mConfigBuilder.build(), builder));
+
+    }
+
+    public boolean isAboveO() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
     }
 
     /**
@@ -467,18 +535,23 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      */
     private void showProgressNotify() {
         progress = 0;
-        mBuilder = getInitNotificationBuilder();
-        mBuilder.setContentTitle("等待下载")
+        mConfigBuilder = getNotifyConfigBuilder()
+                .channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .groupName("showFloatStyleNotify")
+                .setContentTitle("等待下载")
                 .setContentText("进度:")
                 .setTicker("开始下载");// 通知首次出现在通知栏，带上升动画效果的
         if (isStyleConfirmed) {
             //确定进度的
-            mBuilder.setProgress(100, progress, false); // 这个方法是显示进度条  设置为true就是不确定的那种进度条效果
+            mConfigBuilder.setProgress(100, progress, false); // 这个方法是显示进度条  设置为true就是不确定的那种进度条效果
         } else {
             //不确定进度的
-            mBuilder.setProgress(0, 0, true);
+            mConfigBuilder.setProgress(0, 0, true);
         }
-        mNotificationManager.notify(notifyId, mBuilder.build());
+        Notification notification = KdNotificationManager.getInstance(this)
+                .makeNotification(this, mConfigBuilder.build());
+        mNotificationManager.notify(notifyId, notification);
 
     }
 
@@ -486,7 +559,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      * 显示自定义带Progress的通知
      */
     private void showCustomProgressNotify(String status) {
-        mBuilder = getInitNotificationBuilder();
+        mConfigBuilder = getNotifyConfigBuilder();
         RemoteViews mRemoteViews = new RemoteViews(getPackageName(), R.layout.view_custom_progress);
         mRemoteViews.setImageViewResource(R.id.custom_progress_icon, R.drawable.icon);
         mRemoteViews.setTextViewText(R.id.tv_custom_progress_title, "今日头条");
@@ -498,10 +571,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             mRemoteViews.setProgressBar(R.id.custom_progressbar, 100, progress, false);
             mRemoteViews.setViewVisibility(R.id.custom_progressbar, View.VISIBLE);
         }
-        mBuilder.setContent(mRemoteViews)
+        mConfigBuilder.channelId(String.valueOf(notifyId))
+                .channelName(String.valueOf(notifyId))
+                .groupName("showFloatStyleNotify")
+                .setContent(mRemoteViews)
                 .setContentIntent(getDefaultPendingIntent(0))
                 .setTicker("头条更新");
-        Notification notify = mBuilder.build();
+
+        Notification notify = KdNotificationManager.getInstance(this)
+                .makeNotification(this, mConfigBuilder.build());
         mNotificationManager.notify(notifyId, notify);
         startDownloadNotify();
     }
@@ -526,7 +604,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private void pauseDownloadNotify() {
         isPause = true;
         if (!isCustom) {
-            mBuilder.setContentTitle("已暂停");
+            mConfigBuilder.setContentTitle("已暂停");
             setNotify(progress);
         } else {
             showCustomProgressNotify("已暂停");
@@ -537,8 +615,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      * 设置下载进度
      */
     public void setNotify(int progress) {
-        mBuilder.setProgress(100, progress, false); // 这个方法是显示进度条
-        mNotificationManager.notify(notifyId, mBuilder.build());
+        mConfigBuilder.setProgress(100, progress, false); // 这个方法是显示进度条
+
+        mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                .makeNotificationWithExtras(this, mConfigBuilder.build(),
+                        mConfigBuilder.build().toRealBuilder(this)));
     }
 
     /**
@@ -550,8 +631,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
         downloadThread = null;
         if (!isCustom) {
-            mBuilder.setContentTitle("下载已取消").setProgress(0, 0, false);
-            mNotificationManager.notify(notifyId, mBuilder.build());
+            mConfigBuilder.setContentTitle("下载已取消").setProgress(0, 0, false);
+            mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
+                    .makeNotificationWithExtras(this, mConfigBuilder.build(), mConfigBuilder.build().toRealBuilder(this)));
         } else {
             showCustomProgressNotify("下载已取消");
         }
@@ -620,7 +702,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 if (!isPause) {
                     progress = progressNow;
                     if (!isCustom) {
-                        mBuilder.setContentTitle("下载中");
+                        mConfigBuilder.setContentTitle("下载中");
                         if (isStyleConfirmed) {
                             setNotify(progress);
                         }
@@ -639,10 +721,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             // When the loop is finished, updates the notification
             if (downloadThread != null) {
                 if (!isCustom) {
-                    mBuilder.setContentText("下载完成")
+                    mConfigBuilder.setContentText("下载完成")
                             // Removes the progress bar
                             .setProgress(0, 0, false);
-                    mNotificationManager.notify(notifyId, mBuilder.build());
+                    mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(MainActivity.this)
+                            .makeNotification(MainActivity.this, mConfigBuilder.build()));
                 } else {
                     showCustomProgressNotify("下载完成");
                 }

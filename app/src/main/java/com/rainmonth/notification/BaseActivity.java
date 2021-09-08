@@ -14,7 +14,6 @@ import android.support.v7.app.AppCompatActivity;
  */
 public class BaseActivity extends AppCompatActivity {
     protected NotificationManager mNotificationManager;
-    protected NotificationCompat.Builder mBuilder;
 
     protected KdNotifyConfig.Builder mConfigBuilder;
 
@@ -37,11 +36,11 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected KdNotifyConfig.Builder getNotifyConfigBuilder() {
-        return new KdNotifyConfig.Builder(this)
-                .smallIcon(R.mipmap.ic_launcher)
-                .autoCancel(true)
-                .pendingIntent(getDefaultPendingIntent(0))
-                .largeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+        return new KdNotifyConfig.Builder()
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setAutoCancel(true)
+                .setContentIntent(getDefaultPendingIntent(0))
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
     }
 
     protected void clearNotify(int notifyId) {
