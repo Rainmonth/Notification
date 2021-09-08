@@ -303,7 +303,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             KdNotifyConfig.NotificationBuilderWrapper wrapper = (KdNotifyConfig.NotificationBuilderWrapper) builder;
             wrapper.builder.setStyle(new Notification.BigTextStyle()
                     .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，仅此一天！" +
-                            "前2000楼获奖用户的红包已经在路上了哟！")));
+                            "前2000楼获奖用户的红包已经在路上了哟！"));
         } else {
             builder.setStyle(new NotificationCompat.BigTextStyle()
                     .bigText("[遇见8，投了吧]投乐吧疯狂抢楼火热进行中！为中国加油，抢无门槛红包，仅此一天！" +
