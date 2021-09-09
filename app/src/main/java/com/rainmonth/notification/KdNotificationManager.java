@@ -64,7 +64,7 @@ public class KdNotificationManager {
         int sdkInt = Build.VERSION.SDK_INT;
         Notification notification;
         if (sdkInt >= Build.VERSION_CODES.O) { // Api>=26
-            notification = makeNotificationAboveV26(context, config);
+            notification = makeNotificationAboveV26(builder);
         } else if (sdkInt >= Build.VERSION_CODES.LOLLIPOP_MR1) { // Api>=22
             notification = makeNotificationAboveV16(context, config);
         } else if (sdkInt >= Build.VERSION_CODES.JELLY_BEAN) { // Api>=16
@@ -102,6 +102,21 @@ public class KdNotificationManager {
     /**
      * 创建通知（API>=26)
      *
+     * @param builder 通知配置实例
+     * @return Notification instance
+     */
+    private Notification makeNotificationAboveV26(NotificationCompat.Builder builder) {
+        KdNotifyConfig.NotificationBuilderWrapper builderCompat
+                = (KdNotifyConfig.NotificationBuilderWrapper) builder;
+        Notification notification = builderCompat.builder.build();
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        return notification;
+
+    }
+
+    /**
+     * 创建通知（API>=26)
+     *
      * @param context context instance
      * @param config  通知配置实例
      * @return Notification instance
@@ -110,9 +125,6 @@ public class KdNotificationManager {
         NotificationCompat.Builder builder = config.toRealBuilder(context);
         KdNotifyConfig.NotificationBuilderWrapper builderCompat
                 = (KdNotifyConfig.NotificationBuilderWrapper) builder;
-        if (config.mStyle instanceof Notification.Style) {
-            builderCompat.builder.setStyle((Notification.Style) config.mStyle);
-        }
         Notification notification = builderCompat.builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         return notification;
@@ -128,9 +140,6 @@ public class KdNotificationManager {
      */
     private Notification makeNotificationAboveV16(Context context, KdNotifyConfig config) {
         NotificationCompat.Builder builder = config.toRealBuilder(context);
-        if (config.mStyle instanceof NotificationCompat.Style) {
-            builder.setStyle((NotificationCompat.Style) config.mStyle);
-        }
         Notification notification = builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         return notification;

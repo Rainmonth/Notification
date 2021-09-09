@@ -344,11 +344,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                                     "仅此一天！前2000楼获奖用户的红包已经在路上了哟！"));
         }
         mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
-                .makeNotification(this, mConfigBuilder.build()));
-    }
-
-    public boolean sdkAboveO() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+                .makeNotificationWithExtras(this, mConfigBuilder.build(), builder));
     }
 
     /**

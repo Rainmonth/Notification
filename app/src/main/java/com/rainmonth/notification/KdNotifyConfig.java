@@ -64,8 +64,6 @@ public class KdNotifyConfig {
      */
     public int mPriority = Notification.PRIORITY_DEFAULT;
 
-    public Object mStyle;
-
     public long mWhen;
 
     public boolean mAutoCancel = false;
@@ -82,7 +80,6 @@ public class KdNotifyConfig {
         mContentInfo = builder.contentInfo;
         mChannelId = builder.channelId;
         mChannelName = builder.channelName;
-        mStyle = builder.style;
         mWhen = builder.when;
         mAutoCancel = builder.autoCancel;
     }
@@ -173,6 +170,7 @@ public class KdNotifyConfig {
         if (!TextUtils.isEmpty(mGroupId)) {
             channel.setGroup(mGroupId); // 设置Group
         }
+        channel.setDescription("Description of " + mChannelId);
         channel.setSound(null, null);// 禁用通知声音
         channel.enableLights(true); // 开启呼吸灯
         channel.enableVibration(true);// 是否震动
