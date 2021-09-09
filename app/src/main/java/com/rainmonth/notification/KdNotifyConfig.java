@@ -9,7 +9,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.support.v4.BuildConfig;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
@@ -17,7 +16,7 @@ import android.widget.RemoteViews;
 
 /**
  * 通知设置
- * 用来兼容不同版本的 Builder，如 {@link Notification.Builder}、{@link NotificationCompat.Builder}
+ * 用来兼容不同版本的 Builder，如 {@link NotificationCompat.Builder}
  *
  * @author RandyZhang
  * @date 2021/9/7 5:09 下午
@@ -48,7 +47,6 @@ public class KdNotifyConfig {
      * 通道名称
      */
     public String mChannelName;
-
     /**
      * 通道所属group Id
      */
@@ -68,6 +66,7 @@ public class KdNotifyConfig {
 
     public boolean mAutoCancel = false;
     public boolean mOngoing = false;
+    public String mDesc;
 
     public KdNotifyConfig(Builder builder) {
         mPendingIntent = builder.pendingIntent;
@@ -82,45 +81,7 @@ public class KdNotifyConfig {
         mChannelName = builder.channelName;
         mWhen = builder.when;
         mAutoCancel = builder.autoCancel;
-    }
-
-    /**
-     * 做一个适配
-     */
-    static class NotificationBuilderWrapper extends NotificationCompat.Builder {
-        public Notification.Builder builder;
-
-        public NotificationBuilderWrapper(Context context, Notification.Builder builder) {
-            super(context);
-            this.builder = builder;
-        }
-
-        public NotificationCompat.Builder addAction(int icon, CharSequence title, PendingIntent intent) {
-            if (isAboveO()) {
-                builder.addAction(icon, title, intent);
-            } else {
-                super.addAction(icon, title, intent);
-            }
-            return this;
-        }
-
-        public NotificationCompat.Builder addAction(KdActionWrapper actionWrapper) {
-            if (isAboveO()) {
-                builder.addAction(actionWrapper.action);
-            } else {
-                super.addAction(actionWrapper);
-            }
-            return this;
-        }
-
-        public NotificationCompat.Builder setStyle(KdStyleWrapper styleWrapper) {
-            if (isAboveO()) {
-                builder.setStyle(styleWrapper.style);
-            } else {
-                super.setStyle(styleWrapper);
-            }
-            return this;
-        }
+        mDesc = builder.desc;
     }
 
     public static boolean isAboveO() {
@@ -134,65 +95,8 @@ public class KdNotifyConfig {
      * @return NotificationCompat.Builder
      */
     public NotificationCompat.Builder toRealBuilder(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return new NotificationBuilderWrapper(context, toNotificationBuilder(context));
-        } else {
-            return toNotificationCompatBuilder(context);
-        }
+        return toNotificationCompatBuilder(context);
     }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public Notification.Builder toNotificationBuilder(Context context) {
-        if (TextUtils.isEmpty(mChannelId) || TextUtils.isEmpty(mChannelName)) {
-            if (BuildConfig.DEBUG) {
-                throw new IllegalArgumentException("mChannelId or mChannelName should not be " +
-                        "null or empty");
-            }
-            Log.e(KdNotificationManager.TAG, "Api>=26 you should specify channelId with " +
-                    "channelName when use notification!!!");
-        }
-        NotificationManager manager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (!TextUtils.isEmpty(mGroupId)) {
-            // 创建组
-            NotificationChannelGroup channelGroup = new NotificationChannelGroup(mGroupId, mGroupName);
-            manager.createNotificationChannelGroup(channelGroup);
-        } else {
-            Log.w(KdNotificationManager.TAG, "mGroupId not specified!!!");
-        }
-
-        Log.i(KdNotificationManager.TAG, "mChannelId:" + mChannelId
-                + ", mChannelName:" + mChannelName);
-        // 创建channel
-        NotificationChannel channel = new NotificationChannel(mChannelId, mChannelName,
-                getImportanceFromPriority());
-        if (!TextUtils.isEmpty(mGroupId)) {
-            channel.setGroup(mGroupId); // 设置Group
-        }
-        channel.setDescription("Description of " + mChannelId);
-        channel.setSound(null, null);// 禁用通知声音
-        channel.enableLights(true); // 开启呼吸灯
-        channel.enableVibration(true);// 是否震动
-        manager.createNotificationChannel(channel);
-
-        Notification.Builder builder = new Notification.Builder(context, mChannelId);
-        builder.setContent(mRemoteViews);
-        builder.setContentIntent(mPendingIntent);
-        builder.setSmallIcon(mSmallIcon);
-        builder.setLargeIcon(mLargeIcon);
-        builder.setTicker(mTickerText);
-        builder.setContentTitle(mContentTitle);
-        builder.setContentText(mContentText);
-        builder.setContentInfo(mContentInfo);
-        builder.setPriority(mPriority);
-        builder.setWhen(mWhen);
-        builder.setAutoCancel(mAutoCancel);
-        builder.setProgress(mProgressMax, mProgress, mProgressIndeterminate);
-        builder.setOngoing(mOngoing);
-        return builder;
-    }
-
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private int getImportanceFromPriority() {
@@ -212,7 +116,13 @@ public class KdNotifyConfig {
     }
 
     public NotificationCompat.Builder toNotificationCompatBuilder(Context context) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        tryInitNotificationChannelAndGroup(context);
+        NotificationCompat.Builder builder;
+        if (TextUtils.isEmpty(mChannelId) || TextUtils.isEmpty(mChannelName)) {
+            builder = new NotificationCompat.Builder(context);
+        } else {
+            builder = new NotificationCompat.Builder(context, mChannelId);
+        }
         builder.setContent(mRemoteViews);
         builder.setContentIntent(mPendingIntent);
         builder.setTicker(mTickerText);
@@ -229,13 +139,53 @@ public class KdNotifyConfig {
         return builder;
     }
 
-    public static class Builder {
+    private void tryInitNotificationChannelAndGroup(Context context) {
+        if (TextUtils.isEmpty(mChannelId) || TextUtils.isEmpty(mChannelName)) {
+            if (isAboveO()) {
+                if (BuildConfig.DEBUG) {
+                    throw new IllegalArgumentException("mChannelId or mChannelName should not be " +
+                            "null or empty");
+                }
 
+                Log.e(KdNotificationManager.TAG, "Api>=26 you should specify channelId with " +
+                        "channelName when use notification!!!");
+            }
+            return;
+        }
+        if (!isAboveO()) {
+            return;
+        }
+        NotificationManager manager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (!TextUtils.isEmpty(mGroupId)) {
+            // 创建组
+            NotificationChannelGroup channelGroup = new NotificationChannelGroup(mGroupId,
+                    mGroupName);
+            manager.createNotificationChannelGroup(channelGroup);
+        } else {
+            Log.w(KdNotificationManager.TAG, "mGroupId not specified!!!");
+        }
+
+        Log.i(KdNotificationManager.TAG, "mChannelId:" + mChannelId
+                + ", mChannelName:" + mChannelName);
+        // 创建channel
+        NotificationChannel channel = new NotificationChannel(mChannelId, mChannelName,
+                getImportanceFromPriority());
+        if (!TextUtils.isEmpty(mGroupId)) {
+            channel.setGroup(mGroupId); // 设置Group
+        }
+        channel.setDescription(mDesc);
+        channel.setSound(null, null);// 禁用通知声音
+        channel.enableLights(true); // 开启呼吸灯
+        channel.enableVibration(true);// 是否震动
+        manager.createNotificationChannel(channel);
+    }
+
+    public static class Builder {
         public PendingIntent pendingIntent;
         public RemoteViews remoteViews;
         public int smallIcon;
         public Bitmap largeIcon;
-
         public CharSequence tickerText;
         public CharSequence contentTitle;
         public CharSequence contentText;
@@ -256,6 +206,7 @@ public class KdNotifyConfig {
 
         public boolean autoCancel = false;
         public boolean ongoing = false;
+        public String desc;
 
         public Builder() {
 
@@ -351,6 +302,11 @@ public class KdNotifyConfig {
 
         public Builder setOngoing(boolean ongoing) {
             this.ongoing = ongoing;
+            return this;
+        }
+
+        public Builder setDescription(String desc) {
+            this.desc = desc;
             return this;
         }
 

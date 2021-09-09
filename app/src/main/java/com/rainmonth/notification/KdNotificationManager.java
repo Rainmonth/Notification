@@ -1,10 +1,14 @@
 package com.rainmonth.notification;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.widget.RemoteViews;
 
@@ -13,23 +17,11 @@ import android.widget.RemoteViews;
  * @date 2021/9/7 4:51 下午
  */
 public class KdNotificationManager {
-
     public static final String TAG = "KdNotificationManager";
-    public static final String NOTIFICATION_GROUP_PLAY = "com.hhdd.kada.notification_group_play";
-
-    /**
-     * 要保证channelId的唯一性
-     */
-    public static final String CHANNEL_ID_BOOK_PLAY = "CHANNEL_ID_BOOK_PLAY";
-    public static final String CHANNEL_ID_STORY_PLAY = "CHANNEL_ID_STORY_PLAY";
-
-    private static final int NOTIFY_TYPE_BOOK_PLAY = 0;
-    private static final int NOTIFY_TYPE_STORY_PLAY = 1;
 
     private static volatile KdNotificationManager sInstance;
 
     private final NotificationManager mNotificationMgr;
-
 
     private KdNotificationManager(Context context) {
         mNotificationMgr = (NotificationManager) context
@@ -48,33 +40,16 @@ public class KdNotificationManager {
     }
 
     /**
-     * 创建通知对象（带有一些额外配置的通知
-     * 因为Notification可配置的参数太多了，当配置一些不常用的配置时，直接将将其设置到 config 对象得到的 Builder中
+     * 创建通知对象
      *
-     * @param context context
-     * @param config  通知通用设置
-     * @param builder 实际上使用的Builder（Api>=26时使用的是{@link Notification.Builder}，Api<26时使用的时
-     *                {@link NotificationCompat.Builder}
+     * @param builder instance of {@link NotificationCompat.Builder}
      * @return notification instance
      */
-    public Notification makeNotificationWithExtras(Context context,
-                                                   KdNotifyConfig config,
-                                                   NotificationCompat.Builder builder) {
-
-        int sdkInt = Build.VERSION.SDK_INT;
-        Notification notification;
-        if (sdkInt >= Build.VERSION_CODES.O) { // Api>=26
-            notification = makeNotificationAboveV26(builder);
-        } else if (sdkInt >= Build.VERSION_CODES.LOLLIPOP_MR1) { // Api>=22
-            notification = makeNotificationAboveV16(context, config);
-        } else if (sdkInt >= Build.VERSION_CODES.JELLY_BEAN) { // Api>=16
-            notification = makeNotificationAboveV16(context, config);
-        } else {
-            notification = makeNotificationBelowV16(config);
-        }
+    public Notification makeNotification(NotificationCompat.Builder builder) {
+        Notification notification = builder.build();
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
         return notification;
     }
-
 
     /**
      * 创建通知对象
@@ -83,65 +58,19 @@ public class KdNotificationManager {
      * @param config  通知配置实例
      * @return notification instance
      */
-    public Notification makeNotification(Context context,
-                                         KdNotifyConfig config) {
+    public Notification makeNotification(Context context, KdNotifyConfig config) {
         int sdkInt = Build.VERSION.SDK_INT;
+        NotificationCompat.Builder builder = config.toRealBuilder(context);
         Notification notification;
         if (sdkInt >= Build.VERSION_CODES.O) { // Api>=26
-            notification = makeNotificationAboveV26(context, config);
+            notification = makeNotification(builder);
         } else if (sdkInt >= Build.VERSION_CODES.LOLLIPOP_MR1) { // Api>=22
-            notification = makeNotificationAboveV16(context, config);
+            notification = makeNotification(builder);
         } else if (sdkInt >= Build.VERSION_CODES.JELLY_BEAN) { // Api>=16
-            notification = makeNotificationAboveV16(context, config);
+            notification = makeNotification(builder);
         } else {
             notification = makeNotificationBelowV16(config);
         }
-        return notification;
-    }
-
-    /**
-     * 创建通知（API>=26)
-     *
-     * @param builder 通知配置实例
-     * @return Notification instance
-     */
-    private Notification makeNotificationAboveV26(NotificationCompat.Builder builder) {
-        KdNotifyConfig.NotificationBuilderWrapper builderCompat
-                = (KdNotifyConfig.NotificationBuilderWrapper) builder;
-        Notification notification = builderCompat.builder.build();
-        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        return notification;
-
-    }
-
-    /**
-     * 创建通知（API>=26)
-     *
-     * @param context context instance
-     * @param config  通知配置实例
-     * @return Notification instance
-     */
-    private Notification makeNotificationAboveV26(Context context, KdNotifyConfig config) {
-        NotificationCompat.Builder builder = config.toRealBuilder(context);
-        KdNotifyConfig.NotificationBuilderWrapper builderCompat
-                = (KdNotifyConfig.NotificationBuilderWrapper) builder;
-        Notification notification = builderCompat.builder.build();
-        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        return notification;
-
-    }
-
-    /**
-     * 创建通知（26>API>=16)
-     *
-     * @param context context instance
-     * @param config  通知配置实例
-     * @return Notification instance
-     */
-    private Notification makeNotificationAboveV16(Context context, KdNotifyConfig config) {
-        NotificationCompat.Builder builder = config.toRealBuilder(context);
-        Notification notification = builder.build();
-        notification.flags |= Notification.FLAG_AUTO_CANCEL;
         return notification;
     }
 
@@ -170,5 +99,48 @@ public class KdNotificationManager {
         notification.when = System.currentTimeMillis();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
         return notification;
+    }
+
+    public void openNotificationSetting(Context context, NotificationChannel channel) {
+        if (isAboveO()) {
+            openChannelSetting(context, channel);
+        } else {
+
+        }
+    }
+
+
+    /**
+     * 是否Android O 以上版本
+     *
+     * @return true if is above Api 26(include api = 26)
+     */
+    public boolean isAboveO() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+    }
+
+    /**
+     * Android Api >= 26 打开应用对应的通知设置页码
+     *
+     * @param context context instance
+     * @param channel 通知渠道
+     */
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void openChannelSetting(Context context, NotificationChannel channel) {
+        openChannelSetting(context, channel.getId());
+    }
+
+    /**
+     * Android Api >= 26 打开应用对应的通知设置页码
+     *
+     * @param context   context instance
+     * @param channelId 通知渠道id
+     */
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void openChannelSetting(Context context, String channelId) {
+        Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+        intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelId);
+        context.startActivity(intent);
     }
 }
