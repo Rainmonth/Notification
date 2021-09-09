@@ -1,9 +1,11 @@
 package com.rainmonth.notification;
 
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
@@ -74,9 +76,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     // action pending intent
     private PendingIntent firstPendingIntent, secondPendingIntent;
 
+    private Context mContext;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
         setContentView(R.layout.activity_main);
 
         initViewsAndEvents();
@@ -85,6 +89,27 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         firstPendingIntent = PendingIntent.getActivity(this, 1, firstIntent, 0);
         Intent secondIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://csdn.net"));
         secondPendingIntent = PendingIntent.getActivity(this, 1, secondIntent, 0);
+
+        if (!KdNotificationManager.getInstance(this).isNotificationEnable(this)) {
+            Toast.makeText(this, "通知未打开", Toast.LENGTH_SHORT).show();
+            AlertDialog alertDialog = new AlertDialog.Builder(this)
+                    .setTitle("通知弹窗")
+                    .setMessage("通知权限未打开")
+                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    }).setPositiveButton("去打开", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            KdNotificationManager.getInstance(mContext)
+                                    .openNotificationSettingsForApp(mContext);
+                        }
+                    })
+                    .create();
+            alertDialog.show();
+        }
     }
 
     @Override
@@ -245,8 +270,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 .setContentIntent(getDefaultPendingIntent(0))
                 .setContentInfo(String.valueOf(++normalCount));
         NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this)
-                .addAction(0, "百度", firstPendingIntent)// todo 不显示图标传0即可
-                .addAction(0, "SuperRandy", secondPendingIntent)// todo 不显示图标传0即可
+                .addAction(0, "百度", firstPendingIntent)
+                .addAction(0, "SuperRandy", secondPendingIntent)
                 .setDefaults(Notification.DEFAULT_ALL);
 
         mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
@@ -417,15 +442,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         /* 上一首按钮 */
         buttonIntent.putExtra(INTENT_BUTTON_ID_TAG, BUTTON_PREV_ID);
         //这里加了广播，所及INTENT的必须用getBroadcast方法
-        PendingIntent intent_prev = PendingIntent.getBroadcast(this, 1, buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent intent_prev = PendingIntent.getBroadcast(this, 1,
+                buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         mRemoteViews.setOnClickPendingIntent(R.id.btn_custom_prev, intent_prev);
         /* 播放/暂停  按钮 */
         buttonIntent.putExtra(INTENT_BUTTON_ID_TAG, BUTTON_PLAY_ID);
-        PendingIntent intent_play = PendingIntent.getBroadcast(this, 2, buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent intent_play = PendingIntent.getBroadcast(this, 2,
+                buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         mRemoteViews.setOnClickPendingIntent(R.id.btn_custom_play, intent_play);
         /* 下一首 按钮  */
         buttonIntent.putExtra(INTENT_BUTTON_ID_TAG, BUTTON_NEXT_ID);
-        PendingIntent intent_next = PendingIntent.getBroadcast(this, 3, buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent intent_next = PendingIntent.getBroadcast(this, 3,
+                buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         mRemoteViews.setOnClickPendingIntent(R.id.btn_custom_next, intent_next);
 
         mConfigBuilder.setContent(mRemoteViews)
@@ -448,7 +476,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      */
     private void showFloatStyleNotify() {
         Intent hangIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.baidu.com"));
-        PendingIntent hangPendingIntent = PendingIntent.getActivity(this, 0, hangIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent hangPendingIntent = PendingIntent.getActivity(this, 0,
+                hangIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         mConfigBuilder = getNotifyConfigBuilder();
         mConfigBuilder.setSmallIcon(R.mipmap.icon)
                 .channelId(String.valueOf(notifyId))
@@ -461,8 +490,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setAutoCancel(true);
         NotificationCompat.Builder builder = mConfigBuilder.build().toRealBuilder(this)
-                .addAction(0, "百度", firstPendingIntent).addAction(0,
-                        "SuperRandy", secondPendingIntent)
+                .addAction(0, "百度", firstPendingIntent)
+                .addAction(0, "SuperRandy", secondPendingIntent)
                 .setFullScreenIntent(hangPendingIntent, true);
         mNotificationManager.notify(notifyId, KdNotificationManager.getInstance(this)
                 .makeNotification(builder));
