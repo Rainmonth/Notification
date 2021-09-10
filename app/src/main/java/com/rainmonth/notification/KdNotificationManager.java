@@ -24,9 +24,14 @@ import java.lang.reflect.Method;
 
 /**
  * 1. todo Android 6.0的手机上为什么Action不展示
- * 2. todo 各个系统打开应用通知设置的方法
- * 3. todo 判断通知是否打开的方法
- * 4. todo 判断悬浮通知是否打开的方法
+ * 2.  各个系统打开应用通知设置的方法 {@link #openNotifySettingsForApp(Context)}
+ * 3.  判断通知是否打开的方法 {@link #isNotificationEnable(Context)}
+ * - 通用版本，通过 {@link NotificationManagerCompat}
+ * - Api>=19，通过 {@link #isNotificationEnableAbove19(Context)}反射
+ * 4. Api>=26 判断悬浮通知是否打开的方法 {@link #isFloatNotifyEnable(String)}
+ *
+ * 注意的问题：
+ * 1. 自定义视图的通知（{@link NotificationCompat.Builder#setContent(RemoteViews)}）不能再添加Action
  *
  * @author RandyZhang
  * @date 2021/9/7 4:51 下午
@@ -163,7 +168,7 @@ public class KdNotificationManager {
         return areNotificationsEnabled;
     }
 
-    /*
+    /**
      * 判断通知权限是否打开
      */
     private boolean isNotificationEnableAbove19(Context context) {
@@ -188,10 +193,9 @@ public class KdNotificationManager {
         return true;
     }
 
-    public void openNotificationSettingsForApp(Context context) {
+    public void openNotifySettingsForApp(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Intent intent = new Intent();
-            intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
             intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
             intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
             intent.putExtra(Settings.EXTRA_CHANNEL_ID, context.getApplicationInfo().uid);
@@ -226,11 +230,25 @@ public class KdNotificationManager {
 
     /**
      * 应用是否打开悬浮通知权限 （即悬浮在屏幕顶端的通知样式）
+     * 首次认为是打开的，因为首次拿到的 {@link NotificationChannel} 为空
      *
      * @return true if float notification is enable
      */
-    public boolean isFloatNotificationEnable() {
-        // todo
-        throw new RuntimeException("to be impl");
+    public boolean isFloatNotifyEnable(String channelId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {//Android 8.0及以上
+            NotificationChannel channel = mNotificationMgr.getNotificationChannel(channelId);
+            //CHANNEL_ID是自己定义的渠道ID
+            return channel == null || channel.getImportance() >= NotificationManager.IMPORTANCE_HIGH;
+        }
+        return false;
+    }
+
+    public void openNotifyChannelSetting(Context context, String channelId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName());
+            intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelId);
+            context.startActivity(intent);
+        }
     }
 }

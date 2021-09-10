@@ -175,6 +175,7 @@ public class KdNotifyConfig {
             channel.setGroup(mGroupId); // 设置Group
         }
         channel.setDescription(mDesc);
+        channel.setImportance(getImportanceFromPriority());
         channel.setSound(null, null);// 禁用通知声音
         channel.enableLights(true); // 开启呼吸灯
         channel.enableVibration(true);// 是否震动

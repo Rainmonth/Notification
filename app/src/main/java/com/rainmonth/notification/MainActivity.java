@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
@@ -77,6 +76,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private PendingIntent firstPendingIntent, secondPendingIntent;
 
     private Context mContext;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,7 +104,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             KdNotificationManager.getInstance(mContext)
-                                    .openNotificationSettingsForApp(mContext);
+                                    .openNotifySettingsForApp(mContext);
                         }
                     })
                     .create();
@@ -167,7 +167,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 break;
             case R.id.tv_btn_float_style:
                 notifyId = 112;
+//                if (KdNotificationManager.getInstance(mContext).isFloatNotificationEnable(String.valueOf(notifyId))) {
                 showFloatStyleNotify();
+//                } else {
+//                    KdNotificationManager.getInstance(mContext).openNotificationChannelSetting(mContext, String.valueOf(notifyId));
+//                }
                 break;
             case R.id.tv_btn_custom_layout_with_progress_style_not_confirmed:
                 isCustom = false;
